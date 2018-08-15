@@ -7,6 +7,7 @@ import sys
 import time
 from optparse import OptionParser
 
+import gevent.monkey
 import gevent
 
 import locust
@@ -252,6 +253,15 @@ def parse_options():
         default=False,
         help="print json data of the locust classes' task execution ratio"
     )
+
+    # have gevent monkeypatch all before spawning greenlets
+    parser.add_option(
+        '--gevent-monkeypatch',
+        action='store_true',
+        dest='gevent_monkeypatch',
+        default=False,
+        help='have gevent monkeypatch all before spawning greenlets'
+    )
     
     # Version number (optparse gives you --version but we have to do it
     # ourselves to get -V too. sigh)
@@ -373,10 +383,15 @@ def main():
     # setup logging
     setup_logging(options.loglevel, options.logfile)
     logger = logging.getLogger(__name__)
+
     
     if options.show_version:
         print("Locust %s" % (version,))
         sys.exit(0)
+
+    if options.gevent_monkeypatch:
+        logger.info('performing gevent monkeypatch')
+        gevent.monkey.patch_all()
 
     locustfile = find_locustfile(options.locustfile)
 
